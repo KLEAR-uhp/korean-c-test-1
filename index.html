@@ -623,9 +623,18 @@ function onBlankInput(idx) {
   cells.forEach((cell, i) => { cell.textContent = chars[i] || ''; });
   updateProgress();
 
-  if (!isComposing && chars.length >= syllables) {
-    const nextGroup = blankElements[idx + 1];
-    if (nextGroup) setTimeout(() => nextGroup.querySelector('.blank-real-input').focus(), 30);
+  // 모바일은 compositionend가 불안정하므로 isComposing 체크 없이 바로 이동
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    if (chars.length >= syllables) {
+      const nextGroup = blankElements[idx + 1];
+      if (nextGroup) setTimeout(() => nextGroup.querySelector('.blank-real-input').focus(), 50);
+    }
+  } else {
+    if (!isComposing && chars.length >= syllables) {
+      const nextGroup = blankElements[idx + 1];
+      if (nextGroup) setTimeout(() => nextGroup.querySelector('.blank-real-input').focus(), 30);
+    }
   }
 }
 
