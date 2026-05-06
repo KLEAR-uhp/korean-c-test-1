@@ -588,10 +588,11 @@ function buildPassage() {
       inp.addEventListener('focus', () => group.classList.add('focused'));
       inp.addEventListener('blur', () => group.classList.remove('focused'));
       inp.addEventListener('compositionstart', () => { isComposing = true; });
-      inp.addEventListener('compositionend', () => {
-        isComposing = false;
-        onBlankInput(idx);
-      });
+inp.addEventListener('compositionend', () => {
+  isComposing = false;
+  // 모바일에서 compositionend 후 value 확정까지 딜레이 필요
+  setTimeout(() => onBlankInput(idx), 50);
+});
       inp.addEventListener('input', () => onBlankInput(idx));
       inp.addEventListener('keydown', e => onBlankKeyDown(e, idx));
       group.addEventListener('click', () => inp.focus());
@@ -623,18 +624,19 @@ function onBlankInput(idx) {
   cells.forEach((cell, i) => { cell.textContent = chars[i] || ''; });
   updateProgress();
 
-  // 모바일은 compositionend가 불안정하므로 isComposing 체크 없이 바로 이동
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    if (chars.length >= syllables) {
-      const nextGroup = blankElements[idx + 1];
-      if (nextGroup) setTimeout(() => nextGroup.querySelector('.blank-real-input').focus(), 50);
-    }
-  } else {
-    if (!isComposing && chars.length >= syllables) {
-      const nextGroup = blankElements[idx + 1];
-      if (nextGroup) setTimeout(() => nextGroup.querySelector('.blank-real-input').focus(), 30);
-    }
+  // 조합 중이 아닐 때만 다음 칸으로 이동
+  // 모바일은 딜레이를 길게 줘서 조합 완료 후 이동
+  if (!isComposing && chars.length >= syllables) {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const delay = isMobile ? 300 : 30;
+    setTimeout(() => {
+      // 딜레이 후에도 여전히 음절 수 충족하는지 재확인
+      const currentChars = [...inp.value];
+      if (currentChars.length >= syllables) {
+        const nextGroup = blankElements[idx + 1];
+        if (nextGroup) nextGroup.querySelector('.blank-real-input').focus();
+      }
+    }, delay);
   }
 }
 
